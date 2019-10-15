@@ -7,8 +7,7 @@ const router = express();
 
 // POST /api/register Endpoint
 router.post('/register', (req, res) => {
-  // res.send('POST /api/register endpoint');
-  let user = req.body;
+  const user = req.body;
 
   if (user.username && user.password) {
     const hash = bcrypt.hashSync(user.password, 8);
@@ -31,7 +30,26 @@ router.post('/register', (req, res) => {
 
 // POST /api/login Endpoint
 router.post('/login', (req, res) => {
-  res.send('POST /api/login endpoint');
+  const { username, password } = req.body;
+
+  if (username && password) {
+    Users.findBy({ username })
+      .first()
+      .then(user => {
+        if (user && bcrypt.compareSync(password, user.password)) {
+          res
+            .status(200)
+            .json({ message: `Welcome, ${user.username}! You're logged in!` });
+        } else {
+          res.status(401).json({ message: 'You shall not pass!' });
+        }
+      })
+      .catch(err => {
+        res.status(500).json(err);
+      });
+  } else {
+    res.status(400).json({ message: 'Please provide credentials' });
+  }
 });
 
 // GET /api/users Endpoint
