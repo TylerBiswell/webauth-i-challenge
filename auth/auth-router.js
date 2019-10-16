@@ -1,13 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 
-const Users = require('./users-model');
-
-const protected = require('../auth/protected-middleware');
+const Users = require('../users/users-model');
 
 const router = express();
 
-// POST /api/register Endpoint
+// POST /api/auth/register Endpoint
 router.post('/register', (req, res) => {
   const user = req.body;
 
@@ -18,6 +16,7 @@ router.post('/register', (req, res) => {
 
     Users.add(user)
       .then(saved => {
+        req.session.user = { id: saved.id };
         res.status(201).json(saved);
       })
       .catch(err => {
@@ -30,7 +29,7 @@ router.post('/register', (req, res) => {
   }
 });
 
-// POST /api/login Endpoint
+// POST /api/auth/login Endpoint
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -39,6 +38,8 @@ router.post('/login', (req, res) => {
       .first()
       .then(user => {
         if (user && bcrypt.compareSync(password, user.password)) {
+          req.session.user = { id: user.id };
+
           res
             .status(200)
             .json({ message: `Welcome, ${user.username}! You're logged in!` });
@@ -54,20 +55,17 @@ router.post('/login', (req, res) => {
   }
 });
 
-const express = require('express');
-
-const Users = require('./users-model');
-const protected = require('../auth/protected-middleware');
-
-const router = express.Router();
-
-// GET /api/users Endpoint
-router.get('/', protected, (req, res) => {
-  Users.find()
-    .then(users => {
-      res.json(users);
-    })
-    .catch(err => res.send(err));
+// GET /api/auth/logout Endpoint
+router.get('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        res.json({ message: `You can checkout, but you can't leave` });
+      } else {
+        res.status(200).json({ message: `You've successfully logged out` });
+      }
+    });
+  }
 });
 
 module.exports = router;
