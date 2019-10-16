@@ -62,7 +62,7 @@ const protected = require('../auth/protected-middleware');
 const router = express.Router();
 
 // GET /api/users Endpoint
-router.get('/', protected, (req, res) => {
+router.get('/', (req, res) => {
   Users.find()
     .then(users => {
       res.json(users);
